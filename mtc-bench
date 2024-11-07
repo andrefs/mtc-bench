@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# If -h or --help is passed as an argument, print the help message
+if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
+    echo "Usage: $0 [options]"
+    echo "Options:"
+    echo "  -h, --help    Print this help message"
+    echo "  -v, --version Print the version of the benchmark"
+    echo "  -d, --debug   Enable debug mode"
+    exit 0
+fi
+
+# Run hyperfine with the prepare and cleanup steps
+hyperfine "psrecord '$@'"
