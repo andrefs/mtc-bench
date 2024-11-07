@@ -16,8 +16,17 @@ HYPERFINE_ARGS=()
 # Loop over the passed arguments (commands to be benchmarked)
 for cmd in "$@"; do
     # Wrap each command with psrecord
-    HYPERFINE_ARGS+=("psrecord \"$cmd\"")
+    HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $$.log --plot $$.png --include-children \"$cmd\"")
 done
 
+WARMUP=1
+REPS=10
+
 # Call hyperfine with the formatted arguments
-hyperfine "${HYPERFINE_ARGS[@]}"
+hyperfine --warmup $WARMUP \
+    --export-json $$.json \
+    --export-asciidoc $$.txt \
+    --export-markdown $$.md \
+    --export-csv $$.csv \
+    --max-runs $REPS \
+    "${HYPERFINE_ARGS[@]}"
