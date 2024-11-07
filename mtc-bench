@@ -87,9 +87,10 @@ fi
 ###########################################################
 
 RESULTS_BASE_DIR='mtc-results'
-RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$$"}
+export RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$$"}
 WARMUP=${WARMUP:-1}
 REPS=${REPS:-10}
+export TMP_RES_DIR=$(mktemp -d)
 
 HYPERFINE_ARGS=()
 if [[ "$flag_file" == true ]]; then
@@ -136,17 +137,17 @@ if [[ "$flag_file" == true ]]; then
     for i in "${!first_column[@]}"; do
         if [[ -z "${second_column[$i]}" ]]; then
             COMMANDS+=("${first_column[$i]}")
-            HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd-$i-{rep}.log --plot $RES_DIR/cmd-$i-{rep}.png --include-children \"${first_column[$i]}\"")
+            HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $TMP_RES_DIR/cmd.log --plot $TMP_RES_DIR/cmd.png --include-children \"${first_column[$i]}\"")
         else
-            label="${first_column[$i]}"
             COMMANDS+=("${second_column[$i]}")
-            HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd-$label-{rep}.log --plot $RES_DIR/cmd-$label-{rep}.png --include-children \"${second_column[$i]}\"")
+            label="${first_column[$i]}"
+            HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $TMP_RES_DIR/$label.log --plot $TMP_RES_DIR/$label.png --include-children \"${second_column[$i]}\"")
         fi
     done
 else
     >&2 echo "Commands read from command line arguments"
     for ((i = 0; i < ${#COMMANDS[@]}; i++)); do
-        HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"${COMMANDS[$i]}\"")
+        HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $TMP_RES_DIR/cmd.log --plot $TMP_RES_DIR/cmd.png --include-children \"${COMMANDS[$i]}\"")
     done
 fi
 
@@ -169,17 +170,41 @@ for i in "${!COMMANDS[@]}"; do
 done
 >&2 echo -e "Saving results to '$RES_DIR'."
 
+function cleanup() {
+    >&2 echo "Cleaning up..."
+
+    file=$(find "$TMP_RES_DIR" -maxdepth 1 -name "*.log" | head -n 1)
+    if [[ -z "$file" ]]; then
+        >&2 echo "No log file found for cleanup"
+        return
+    fi
+
+    label="${file##*/}"
+    label="${label%.*}"
+    if [[ -z "$label" ]]; then
+        >&2 echo "Error: Could not determine label for cleanup"
+    fi
+    counter=1
+    for ext in log png; do
+        while [[ -f "$RES_DIR/$label-$counter.$ext" ]]; do
+            counter=$((counter + 1))
+        done
+        mv "$TMP_RES_DIR/$label.$ext" "$RES_DIR/$label-$counter.$ext"
+    done
+}
+export -f cleanup
+
 # hyperfine options
 HYPERFINE_FLAGS=""
 if [[ "$flag_show_output" == true ]]; then
     HYPERFINE_FLAGS+="--show-output"
 fi
-HYPERFINE_FLAGS+="-P rep 1 $REPS --warmup $WARMUP"
+HYPERFINE_FLAGS+=" --shell=bash --runs $REPS --warmup $WARMUP"
 HYPERFINE_FLAGS+=" --export-json $RES_DIR/hyperfine.json"
 HYPERFINE_FLAGS+=" --export-asciidoc $RES_DIR/hyperfine.txt"
 HYPERFINE_FLAGS+=" --export-markdown $RES_DIR/hyperfine.md"
 HYPERFINE_FLAGS+=" --export-csv $RES_DIR/hyperfine.csv"
-HYPERFINE_FLAGS+=" --max-runs $REPS"
+HYPERFINE_FLAGS+=" --prepare 'cleanup'"
 
 if [[ "$flag_verbose" == true ]]; then
     >&2 echo "HYPERFINE_FLAGS: ${HYPERFINE_FLAGS}"
@@ -187,5 +212,6 @@ fi
 
 # Call hyperfine with the formatted arguments
 hyperfine ${HYPERFINE_FLAGS[@]} "${HYPERFINE_ARGS[@]}"
+cleanup
 
 >&2 echo -e "\nDone. Results saved to '$RES_DIR'."
