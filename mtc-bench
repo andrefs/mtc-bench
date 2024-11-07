@@ -10,4 +10,14 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     exit 0
 fi
 
-hyperfine --runs 1 --show-output "psrecord \"$*\""
+# Store the provided arguments as a string in the appropriate format
+HYPERFINE_ARGS=()
+
+# Loop over the passed arguments (commands to be benchmarked)
+for cmd in "$@"; do
+    # Wrap each command with psrecord
+    HYPERFINE_ARGS+=("psrecord \"$cmd\"")
+done
+
+# Call hyperfine with the formatted arguments
+hyperfine "${HYPERFINE_ARGS[@]}"
