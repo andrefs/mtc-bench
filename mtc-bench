@@ -102,7 +102,7 @@ for i in "${!COMMANDS[@]}"; do
         >&2 echo -e "  [$i] ${COMMANDS[$i]}"
     fi
 done
->&2 echo Saving results to "$RES_DIR".
+>&2 echo -e "Saving results to '$RES_DIR'."
 
 # hyperfine options
 HYPERFINE_FLAGS=""
@@ -116,8 +116,11 @@ HYPERFINE_FLAGS+=" --export-markdown $RES_DIR/hyperfine.md"
 HYPERFINE_FLAGS+=" --export-csv $RES_DIR/hyperfine.csv"
 HYPERFINE_FLAGS+=" --max-runs $REPS"
 
-echo "HYPERFINE_FLAGS: ${HYPERFINE_FLAGS}"
+if [[ "$flag_verbose" == true ]]; then
+    >&2 echo "HYPERFINE_FLAGS: ${HYPERFINE_FLAGS}"
+fi
+
 # Call hyperfine with the formatted arguments
 hyperfine ${HYPERFINE_FLAGS[@]} "${HYPERFINE_ARGS[@]}"
 
->&2 echo Done. Results saved to "$RES_DIR".
+>&2 echo -e "\nDone. Results saved to '$RES_DIR'."
