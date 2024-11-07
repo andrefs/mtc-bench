@@ -10,5 +10,4 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     exit 0
 fi
 
-# Run hyperfine with the prepare and cleanup steps
-hyperfine "psrecord '$@'"
+hyperfine --runs 1 --show-output "psrecord \"$*\""
