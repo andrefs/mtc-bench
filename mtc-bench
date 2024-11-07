@@ -5,12 +5,22 @@ flag_help=false
 flag_file=false
 option_file=""
 COMMANDS=()
+flag_verbose=false
+flag_show_output=false
 
 # Loop over arguments
 while [[ "$#" -gt 0 ]]; do
     case "$1" in
     -h | --help)
         flag_help=true
+        shift
+        ;;
+    -v | --verbose)
+        flag_verbose=true
+        shift
+        ;;
+    -s | --show-output)
+        flag_show_output=true
         shift
         ;;
     -f | --file)
@@ -64,40 +74,50 @@ if [[ "$flag_file" == true && ! -f "$option_file" ]]; then
     exit 1
 fi
 
+RESULTS_BASE_DIR='mtc-results'
+RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$$"}
+WARMUP=${WARMUP:-1}
+REPS=${REPS:-10}
+
 HYPERFINE_ARGS=()
 if [[ "$flag_file" == true ]]; then
-    >&2 echo "Reading COMMANDS from file: $option_file"
+    >&2 echo "Reading commands from file: $option_file"
     while IFS= read -r line; do
         COMMANDS+=("$line")
         HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"$line\"")
     done <"$option_file"
 else
     for ((i = 0; i < ${#COMMANDS[@]}; i++)); do
-        # Wrap each command with psrecord
+        >&2 echo "Commands read from command line arguments"
         HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"${COMMANDS[$i]}\"")
     done
 fi
 
-RESULTS_BASE_DIR='mtc-results'
-RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$$"}
-WARMUP=${WARMUP:-1}
-REPS=${REPS:-10}
-
 mkdir -p "$RES_DIR"
->&2 echo Running benchmark with "$REPS" repetitions on ${#HYPERFINE_ARGS[@]} COMMANDS with "$WARMUP" warm up rounds.
->&2 echo 'COMMANDS:'
+>&2 echo Running benchmark with "$REPS" repetitions and "$WARMUP" warm up rounds on these commands:
 for i in "${!COMMANDS[@]}"; do
-    >&2 echo -e "  [$i] ${COMMANDS[$i]}"
+    if [[ "$flag_verbose" == true ]]; then
+        >&2 echo -e "  [$i] ${HYPERFINE_ARGS[$i]}"
+    else
+        >&2 echo -e "  [$i] ${COMMANDS[$i]}"
+    fi
 done
 >&2 echo Saving results to "$RES_DIR".
 
-## Call hyperfine with the formatted arguments
-#hyperfine -P rep 1 "$REPS" --warmup "$WARMUP" \
-#    --export-json "$RES_DIR/hyperfine.json" \
-#    --export-asciidoc "$RES_DIR/hyperfine.txt" \
-#    --export-markdown "$RES_DIR/hyperfine.md" \
-#    --export-csv "$RES_DIR/hyperfine.csv" \
-#    --max-runs "$REPS" \
-#    "${HYPERFINE_ARGS[@]}"
-#
+# hyperfine options
+HYPERFINE_FLAGS=""
+if [[ "$flag_show_output" == true ]]; then
+    HYPERFINE_FLAGS+="--show-output"
+fi
+HYPERFINE_FLAGS+="-P rep 1 $REPS --warmup $WARMUP"
+HYPERFINE_FLAGS+=" --export-json $RES_DIR/hyperfine.json"
+HYPERFINE_FLAGS+=" --export-asciidoc $RES_DIR/hyperfine.txt"
+HYPERFINE_FLAGS+=" --export-markdown $RES_DIR/hyperfine.md"
+HYPERFINE_FLAGS+=" --export-csv $RES_DIR/hyperfine.csv"
+HYPERFINE_FLAGS+=" --max-runs $REPS"
+
+echo "HYPERFINE_FLAGS: ${HYPERFINE_FLAGS}"
+# Call hyperfine with the formatted arguments
+hyperfine ${HYPERFINE_FLAGS[@]} "${HYPERFINE_ARGS[@]}"
+
 >&2 echo Done. Results saved to "$RES_DIR".
