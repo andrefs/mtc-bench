@@ -94,13 +94,58 @@ REPS=${REPS:-10}
 HYPERFINE_ARGS=()
 if [[ "$flag_file" == true ]]; then
     >&2 echo "Reading commands from file: $option_file"
+    # Initialize arrays
+    first_column=()
+    second_column=()
+    last_line_cols=-1
+
+    # Process each line in the CSV
     while IFS= read -r line; do
-        COMMANDS+=("$line")
-        HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"$line\"")
+        if [[ $line =~ ^[[:space:]]*(\"[^\"]*\"|[^\",]*)[[:space:]]*$ ]]; then
+            col1=$(echo "${BASH_REMATCH[1]}" | sed 's/^"//;s/"$//')
+            col2=""
+        elif [[ $line =~ ^[[:space:]]*(\"[^\"]*\"|[^\",]*)[[:space:]]*,[[:space:]]*(\"[^\"]+\"|[^\",]+)[[:space:]]*$ ]]; then
+            col1=$(echo "${BASH_REMATCH[1]}" | sed 's/^"//;s/"$//')
+            col2=$(echo "${BASH_REMATCH[2]}" | sed 's/^"//;s/"$//')
+        else
+            >&2 echo "Error: Invalid CSV format - line does not match expected format: $line"
+            exit 1
+        fi
+
+        if [[ -z "$col1" && -z "$col2" ]]; then
+            >&2 echo "Error: Invalid CSV format - line with empty fields: $line"
+            exit 1
+        elif [[ -z "$col1" || -z "$col2" ]]; then
+            cols=1
+        else
+            cols=2
+        fi
+
+        if [[ $last_line_cols -ne -1 && $cols -ne $last_line_cols ]]; then
+            >&2 echo "Error: Invalid CSV format - inconsistent number of fields: this line has $cols fields, but the previous line had $last_line_cols fields"
+            exit 1
+        fi
+
+        last_line_cols=$cols
+
+        # Append each field to the respective array
+        first_column+=("$col1")
+        second_column+=("$col2")
     done <"$option_file"
+
+    for i in "${!first_column[@]}"; do
+        if [[ -z "${second_column[$i]}" ]]; then
+            COMMANDS+=("${first_column[$i]}")
+            HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd-$i-{rep}.log --plot $RES_DIR/cmd-$i-{rep}.png --include-children \"${first_column[$i]}\"")
+        else
+            label="${first_column[$i]}"
+            COMMANDS+=("${second_column[$i]}")
+            HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd-$label-{rep}.log --plot $RES_DIR/cmd-$label-{rep}.png --include-children \"${second_column[$i]}\"")
+        fi
+    done
 else
+    >&2 echo "Commands read from command line arguments"
     for ((i = 0; i < ${#COMMANDS[@]}; i++)); do
-        >&2 echo "Commands read from command line arguments"
         HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"${COMMANDS[$i]}\"")
     done
 fi
@@ -112,10 +157,14 @@ fi
 mkdir -p "$RES_DIR"
 >&2 echo Running benchmark with "$REPS" repetitions and "$WARMUP" warm up rounds on these commands:
 for i in "${!COMMANDS[@]}"; do
+    label=$i
+    if [[ -n "${second_column[$i]}" ]]; then
+        label="${first_column[$i]}"
+    fi
     if [[ "$flag_verbose" == true ]]; then
-        >&2 echo -e "  [$i] ${HYPERFINE_ARGS[$i]}"
+        >&2 echo -e "  [$label] ${HYPERFINE_ARGS[$i]}"
     else
-        >&2 echo -e "  [$i] ${COMMANDS[$i]}"
+        >&2 echo -e "  [$label] ${COMMANDS[$i]}"
     fi
 done
 >&2 echo -e "Saving results to '$RES_DIR'."
