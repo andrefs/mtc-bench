@@ -175,7 +175,7 @@ function cleanup() {
 
     file=$(find "$TMP_RES_DIR" -maxdepth 1 -name "*.log" | head -n 1)
     if [[ -z "$file" ]]; then
-        >&2 echo "No log file found for cleanup"
+        >&2 echo "  no log file found for cleanup"
         return
     fi
 
@@ -189,6 +189,7 @@ function cleanup() {
         while [[ -f "$RES_DIR/$label-$counter.$ext" ]]; do
             counter=$((counter + 1))
         done
+        >&2 echo "  moving $TMP_RES_DIR/$label.$ext to $RES_DIR/$label-$counter.$ext"
         mv "$TMP_RES_DIR/$label.$ext" "$RES_DIR/$label-$counter.$ext"
     done
 }
@@ -204,14 +205,18 @@ HYPERFINE_FLAGS+=" --export-json $RES_DIR/hyperfine.json"
 HYPERFINE_FLAGS+=" --export-asciidoc $RES_DIR/hyperfine.txt"
 HYPERFINE_FLAGS+=" --export-markdown $RES_DIR/hyperfine.md"
 HYPERFINE_FLAGS+=" --export-csv $RES_DIR/hyperfine.csv"
-HYPERFINE_FLAGS+=" --prepare 'cleanup'"
 
 if [[ "$flag_verbose" == true ]]; then
     >&2 echo "HYPERFINE_FLAGS: ${HYPERFINE_FLAGS}"
 fi
 
+WITH_PREPARE=()
+for i in "${!HYPERFINE_ARGS[@]}"; do
+    WITH_PREPARE+=("--prepare 'cleanup' '${HYPERFINE_ARGS[$i]}'")
+done
 # Call hyperfine with the formatted arguments
-hyperfine ${HYPERFINE_FLAGS[@]} "${HYPERFINE_ARGS[@]}"
+echo hyperfine $HYPERFINE_FLAGS "${WITH_PREPARE[@]}"
+eval "hyperfine $HYPERFINE_FLAGS ${WITH_PREPARE[@]}"
 cleanup
 
 >&2 echo -e "\nDone. Results saved to '$RES_DIR'."
