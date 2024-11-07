@@ -10,23 +10,30 @@ if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
     exit 0
 fi
 
-# Store the provided arguments as a string in the appropriate format
-HYPERFINE_ARGS=()
+RESULTS_BASE_DIR='mtc-results'
+RES_DIR="$RESULTS_BASE_DIR/$$"
+mkdir -p $RES_DIR
+
+# Print $RES_DIR in STDERR
+>&2 echo Benchmark started. Saving results to $RES_DIR.
 
 # Loop over the passed arguments (commands to be benchmarked)
-for cmd in "$@"; do
+HYPERFINE_ARGS=()
+for i in $(seq 1 $#); do
     # Wrap each command with psrecord
-    HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $$.log --plot $$.png --include-children \"$cmd\"")
+    HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"${!i}\"")
 done
 
 WARMUP=1
 REPS=10
 
 # Call hyperfine with the formatted arguments
-hyperfine --warmup $WARMUP \
-    --export-json $$.json \
-    --export-asciidoc $$.txt \
-    --export-markdown $$.md \
-    --export-csv $$.csv \
+hyperfine -P rep 1 $REPS --warmup $WARMUP \
+    --export-json $RES_DIR/hyperfinejson \
+    --export-asciidoc $RES_DIR/hyperfine.txt \
+    --export-markdown $RES_DIR/hyperfine.md \
+    --export-csv $RES_DIR/hyperfine.csv \
     --max-runs $REPS \
     "${HYPERFINE_ARGS[@]}"
+
+>&2 echo Done. Results saved to $RES_DIR.

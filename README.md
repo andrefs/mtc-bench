@@ -9,7 +9,19 @@ Benchmark commands using `hyperfine` and `psrecord`. Look into CPU, memory and t
 
 ## Installing
 
+Run the `install.sh` script to install `mtc-bench` on your `/usr/local/bin` directory.
+
 ## Run
+
+```
+mtc-bench 'CMD1 [ARGS...]' ['CMD2'...]
+```
+
+Example:
+
+```
+mtc-bench 'sleep 2' 'sleep 3'
+```
 
 ## Bugs and stuff
 
