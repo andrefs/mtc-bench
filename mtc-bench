@@ -1,5 +1,9 @@
 #!/bin/bash
 
+###########################################################
+# Parse command line arguments
+###########################################################
+
 # Define default values for variables
 flag_help=false
 flag_file=false
@@ -43,6 +47,10 @@ while [[ "$#" -gt 0 ]]; do
     esac
 done
 
+###########################################################
+# Validate and process arguments
+###########################################################
+
 # Print help message
 if [[ "$flag_help" == true ]]; then
     >&2 echo "Usage: $0 [options]"
@@ -74,6 +82,10 @@ if [[ "$flag_file" == true && ! -f "$option_file" ]]; then
     exit 1
 fi
 
+###########################################################
+# Read commands
+###########################################################
+
 RESULTS_BASE_DIR='mtc-results'
 RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$$"}
 WARMUP=${WARMUP:-1}
@@ -92,6 +104,10 @@ else
         HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"${COMMANDS[$i]}\"")
     done
 fi
+
+###########################################################
+# Run benchmark
+###########################################################
 
 mkdir -p "$RES_DIR"
 >&2 echo Running benchmark with "$REPS" repetitions and "$WARMUP" warm up rounds on these commands:
