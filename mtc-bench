@@ -1,39 +1,103 @@
 #!/bin/bash
 
-# If -h or --help is passed as an argument, print the help message
-if [ "$1" == "-h" ] || [ "$1" == "--help" ]; then
-    echo "Usage: $0 [options]"
-    echo "Options:"
-    echo "  -h, --help    Print this help message"
-    #echo "  -v, --version Print the version of the benchmark"
-    #echo "  -d, --debug   Enable debug mode"
+# Define default values for variables
+flag_help=false
+flag_file=false
+option_file=""
+COMMANDS=()
+
+# Loop over arguments
+while [[ "$#" -gt 0 ]]; do
+    case "$1" in
+    -h | --help)
+        flag_help=true
+        shift
+        ;;
+    -f | --file)
+        flag_file=true
+        option_file="$2"
+        if [[ "$#" -eq 1 ]]; then
+            >&2 echo "Error: Must specify a file with the -f option" >&2
+            exit 1
+        fi
+        shift 2
+        ;;
+    *)
+        if [[ "$1" == -* ]]; then
+            >&2 echo "Error: Invalid option: $1" >&2
+            exit 1
+        fi
+        COMMANDS+=("$1")
+        shift
+        ;;
+    esac
+done
+
+# Print help message
+if [[ "$flag_help" == true ]]; then
+    >&2 echo "Usage: $0 [options]"
+    >&2 echo "Options:"
+    >&2 echo "  -h, --help    Print this help message"
     exit 0
+fi
+
+# Check for conflicting options
+if [[ "$flag_file" == true && "${#COMMANDS[@]}" -ne 0 ]]; then
+    >&2 echo "Error: Cannot specify both a file ($option_file) and COMMANDS (${commands[*]})" >&2
+    exit 1
+fi
+
+# Check for missing options
+if [[ "$flag_file" == false && "${#COMMANDS[@]}" -eq 0 ]]; then
+    >&2 echo "Error: Must specify either a file or COMMANDS" >&2
+    exit 1
+fi
+
+if [[ "$flag_file" == true && -z "$option_file" ]]; then
+    >&2 echo "Error: Must specify a file with the -f option" >&2
+    exit 1
+fi
+
+# Check for file existence
+if [[ "$flag_file" == true && ! -f "$option_file" ]]; then
+    >&2 echo "Error: File not found: '$option_file'" >&2
+    exit 1
+fi
+
+HYPERFINE_ARGS=()
+if [[ "$flag_file" == true ]]; then
+    >&2 echo "Reading COMMANDS from file: $option_file"
+    while IFS= read -r line; do
+        COMMANDS+=("$line")
+        HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"$line\"")
+    done <"$option_file"
+else
+    for ((i = 0; i < ${#COMMANDS[@]}; i++)); do
+        # Wrap each command with psrecord
+        HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"${COMMANDS[$i]}\"")
+    done
 fi
 
 RESULTS_BASE_DIR='mtc-results'
 RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$$"}
-mkdir -p "$RES_DIR"
-
-# Loop over the passed arguments (commands to be benchmarked)
-HYPERFINE_ARGS=()
-for i in $(seq 1 $#); do
-    # Wrap each command with psrecord
-    HYPERFINE_ARGS+=("psrecord --interval 0.1 --log $RES_DIR/cmd$i-{rep}.log --plot $RES_DIR/$i-{rep}.png --include-children \"${!i}\"")
-done
-
 WARMUP=${WARMUP:-1}
 REPS=${REPS:-10}
 
->&2 echo Running benchmark with "$REPS" repetitions on ${#HYPERFINE_ARGS[@]} commands with "$WARMUP" warm up rounds.
+mkdir -p "$RES_DIR"
+>&2 echo Running benchmark with "$REPS" repetitions on ${#HYPERFINE_ARGS[@]} COMMANDS with "$WARMUP" warm up rounds.
+>&2 echo 'COMMANDS:'
+for i in "${!COMMANDS[@]}"; do
+    >&2 echo -e "  [$i] ${COMMANDS[$i]}"
+done
 >&2 echo Saving results to "$RES_DIR".
 
-# Call hyperfine with the formatted arguments
-hyperfine -P rep 1 "$REPS" --warmup "$WARMUP" \
-    --export-json "$RES_DIR/hyperfine.json" \
-    --export-asciidoc "$RES_DIR/hyperfine.txt" \
-    --export-markdown "$RES_DIR/hyperfine.md" \
-    --export-csv "$RES_DIR/hyperfine.csv" \
-    --max-runs "$REPS" \
-    "${HYPERFINE_ARGS[@]}"
-
+## Call hyperfine with the formatted arguments
+#hyperfine -P rep 1 "$REPS" --warmup "$WARMUP" \
+#    --export-json "$RES_DIR/hyperfine.json" \
+#    --export-asciidoc "$RES_DIR/hyperfine.txt" \
+#    --export-markdown "$RES_DIR/hyperfine.md" \
+#    --export-csv "$RES_DIR/hyperfine.csv" \
+#    --max-runs "$REPS" \
+#    "${HYPERFINE_ARGS[@]}"
+#
 >&2 echo Done. Results saved to "$RES_DIR".
