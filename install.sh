@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# The default directory for executables
-INSTALL_DIR="/usr/local/bin"
+# ENV var or default directory for executables
+INSTALL_DIR=${INSTALL_DIR:-"/usr/local/bin"}
 
 # Name of your script
 SCRIPT_NAME="mtc-bench"
@@ -21,12 +21,20 @@ fi
 
 # Copy the script to the target directory
 echo "Installing $SCRIPT_NAME to $INSTALL_DIR..."
-sudo cp "$SCRIPT_NAME" "$INSTALL_DIR/$SCRIPT_NAME"
+# Check if the current user has write access to the destination directory
+if [ -w "$INSTALL_DIR" ]; then
+  cp "$SCRIPT_NAME" "$INSTALL_DIR/$SCRIPT_NAME"
+  # Make the script executable
+  chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+else
+  echo "You do not have write permission for $INSTALL_DIR. Using sudo..."
+  # Move the file with sudo
+  sudo cp "$SCRIPT_NAME" "$INSTALL_DIR/$SCRIPT_NAME"
+  # Make the script executable
+  sudo chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
+fi
 
-# Make the script executable
-sudo chmod +x "$INSTALL_DIR/$SCRIPT_NAME"
-
-echo "$SCRIPT_NAME has been successfully installed to $INSTALL_DIR."
+echo "$SCRIPT_NAME has been successfully installed to $INSTALL_DIR/$SCRIPT_NAME."
 
 # Optionally, you can add instructions to the user
-echo "You can now run '$SCRIPT_NAME' from anywhere!"
+echo "You should now be able to run '$SCRIPT_NAME' from anywhere!"

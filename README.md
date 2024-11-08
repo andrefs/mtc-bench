@@ -11,6 +11,12 @@ Benchmark commands using `hyperfine` and `psrecord`. Look into CPU, memory and t
 
 Run the `install.sh` script to install `mtc-bench` on your `/usr/local/bin` directory.
 
+You can use the `INSTALL_DIR` ENV var to install on another place, e.g.:
+
+```
+INSTALL_DIR=$HOME/.local/bin ./install.sh
+```
+
 ## Run
 
 ```bash
