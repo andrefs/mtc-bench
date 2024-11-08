@@ -23,8 +23,7 @@ Example:
 mtc-bench 'sleep 2' 'sleep 3'
 ```
 
-Alternatively, you can pass a CSV file with commands to be run instead.
-For this use `-f CMDS_FILE`. `CMDS_FILE` should have one command per line:
+Alternatively, you can pass a CSV file with commands to be run, using the flag `-f CMDS_FILE`. The file should have one command per line:
 
 ```csv
 command1 arg1 arg2
@@ -37,6 +36,8 @@ You can also provide a label for each command, this will make the output files h
 cmd1Label, command1 arg1 arg2
 cmd2Label, command2
 ```
+
+On the commands file, either all commands have labels or no command has label.
 
 ## Options
 
