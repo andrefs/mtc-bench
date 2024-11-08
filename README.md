@@ -13,15 +13,45 @@ Run the `install.sh` script to install `mtc-bench` on your `/usr/local/bin` dire
 
 ## Run
 
-```
+```bash
 mtc-bench 'CMD1 [ARGS...]' ['CMD2'...]
 ```
 
 Example:
 
-```
+```bash
 mtc-bench 'sleep 2' 'sleep 3'
 ```
+
+Alternatively, you can pass a CSV file with commands to be run instead.
+For this use `-f CMDS_FILE`. `CMDS_FILE` should have one command per line:
+
+```csv
+command1 arg1 arg2
+command2 arg1
+```
+
+You can also provide a label for each command, this will make the output files have nicer names:
+
+```csv
+cmd1Label, command1 arg1 arg2
+cmd2Label, command2
+```
+
+## Options
+
+- `-h, --help`: Print help message
+- `-v, --verbose`: Print verbose output
+- `-s, --show-output`: Show output of the commands
+- `-f, --file`: Read commands from a CSV file
+
+## ENV vars
+
+You can also change the behavior of `mtc-bench` using the following ENV variables:
+
+- `WARMUP`: Number of warmup runs
+- `RES_DIR`: Directory to store results
+- `RUNS`: Number of runs
 
 ## Bugs and stuff
 

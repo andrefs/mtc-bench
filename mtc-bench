@@ -55,7 +55,12 @@ done
 if [[ "$flag_help" == true ]]; then
     >&2 echo "Usage: $0 [options]"
     >&2 echo "Options:"
-    >&2 echo "  -h, --help    Print this help message"
+    >&2 echo "  -h, --help           Print this help message"
+    >&2 echo "  -v, --verbose        Print verbose output"
+    >&2 echo "  -s, --show-output    Show output of the commands"
+    >&2 echo "  -f, --file FILE      Read commands from a CSV file"
+    >&2 echo "  COMMANDS             Commands to run"
+
     exit 0
 fi
 
@@ -87,9 +92,10 @@ fi
 ###########################################################
 
 RESULTS_BASE_DIR='mtc-results'
-export RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$$"}
+TS=$(date +%Y%m%d-%H%M%S)
+export RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$TS"}
 WARMUP=${WARMUP:-1}
-REPS=${REPS:-10}
+RUNS=${RUNS:-10}
 export TMP_RES_DIR=$(mktemp -d)
 
 HYPERFINE_ARGS=()
@@ -152,11 +158,11 @@ else
 fi
 
 ###########################################################
-# Run benchmark
+# Print benchmark information
 ###########################################################
 
 mkdir -p "$RES_DIR"
->&2 echo Running benchmark with "$REPS" repetitions and "$WARMUP" warm up rounds on these commands:
+>&2 echo Running benchmark with "$RUNS" repetitions and "$WARMUP" warm up rounds on these commands:
 for i in "${!COMMANDS[@]}"; do
     label=$i
     if [[ -n "${second_column[$i]}" ]]; then
@@ -168,10 +174,16 @@ for i in "${!COMMANDS[@]}"; do
         >&2 echo -e "  [$label] ${COMMANDS[$i]}"
     fi
 done
->&2 echo -e "Saving results to '$RES_DIR'."
+>&2 echo -e "Saving results to '$RES_DIR'.\n"
+
+###########################################################
+# Cleanup function
+###########################################################
 
 function cleanup() {
-    >&2 echo "Cleaning up..."
+    if [[ "$flag_verbose" == true ]]; then
+        >&2 echo "Cleaning up..."
+    fi
 
     file=$(find "$TMP_RES_DIR" -maxdepth 1 -name "*.log" | head -n 1)
     if [[ -z "$file" ]]; then
@@ -189,18 +201,24 @@ function cleanup() {
         while [[ -f "$RES_DIR/$label-$counter.$ext" ]]; do
             counter=$((counter + 1))
         done
-        >&2 echo "  moving $TMP_RES_DIR/$label.$ext to $RES_DIR/$label-$counter.$ext"
+        if [[ "$flag_verbose" == true ]]; then
+            >&2 echo "  moving $TMP_RES_DIR/$label.$ext to $RES_DIR/$label-$counter.$ext"
+        fi
         mv "$TMP_RES_DIR/$label.$ext" "$RES_DIR/$label-$counter.$ext"
     done
 }
 export -f cleanup
+
+###########################################################
+# hyperfine options
+###########################################################
 
 # hyperfine options
 HYPERFINE_FLAGS=""
 if [[ "$flag_show_output" == true ]]; then
     HYPERFINE_FLAGS+="--show-output"
 fi
-HYPERFINE_FLAGS+=" --shell=bash --runs $REPS --warmup $WARMUP"
+HYPERFINE_FLAGS+=" --shell=bash --runs $RUNS --warmup $WARMUP"
 HYPERFINE_FLAGS+=" --export-json $RES_DIR/hyperfine.json"
 HYPERFINE_FLAGS+=" --export-asciidoc $RES_DIR/hyperfine.txt"
 HYPERFINE_FLAGS+=" --export-markdown $RES_DIR/hyperfine.md"
@@ -214,9 +232,22 @@ WITH_PREPARE=()
 for i in "${!HYPERFINE_ARGS[@]}"; do
     WITH_PREPARE+=("--prepare 'cleanup' '${HYPERFINE_ARGS[$i]}'")
 done
-# Call hyperfine with the formatted arguments
-echo hyperfine $HYPERFINE_FLAGS "${WITH_PREPARE[@]}"
-eval "hyperfine $HYPERFINE_FLAGS ${WITH_PREPARE[@]}"
+
+###########################################################
+# Run hyperfine
+###########################################################
+
+HF_CMD="hyperfine $HYPERFINE_FLAGS ${WITH_PREPARE[*]}"
+if [[ "$flag_verbose" == true ]]; then
+    >&2 echo "hyperfine command: ${HF_CMD}"
+fi
+eval "$HF_CMD"
+
+###########################################################
+# Cleanup
+###########################################################
+
 cleanup
+rm -rf "$TMP_RES_DIR"
 
 >&2 echo -e "\nDone. Results saved to '$RES_DIR'."
