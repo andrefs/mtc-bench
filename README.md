@@ -53,6 +53,14 @@ You can also change the behavior of `mtc-bench` using the following ENV variable
 - `RES_DIR`: Directory to store results
 - `RUNS`: Number of runs
 
+## Performance
+
+In `mtc-bench`, `hyperfine` invokes `psrecord`, which in turn invokes the command to be benchmarked.
+This means that `hyperfine` is not directly measuring the command's run time, but `psrecord`'s instead.
+
+I ran a few tests on my laptop and `psrecord` seems to add around 0.7s to the command's run time in each run (probably because it is generating the output log and image).
+Anyway, it shouldn't change much across runs, so the comparisons between the commands being benchmarked still stand.
+
 ## Bugs and stuff
 
 Open a GitHub [issue](https://github.com/andrefs/mtc-bench/issues) or, preferably, send me a [pull request](https://github.com/andrefs/mtc-bench/pulls).
