@@ -96,7 +96,8 @@ TS=$(date +%Y%m%d-%H%M%S)
 export RES_DIR=${RES_DIR:-"$RESULTS_BASE_DIR/$TS"}
 WARMUP=${WARMUP:-1}
 RUNS=${RUNS:-10}
-export TMP_RES_DIR=$(mktemp -d)
+TMP_RES_DIR=$(mktemp -d)
+export TMP_RES_DIR
 
 HYPERFINE_ARGS=()
 if [[ "$flag_file" == true ]]; then
@@ -108,21 +109,20 @@ if [[ "$flag_file" == true ]]; then
 
     # Process each line in the CSV
     while IFS= read -r line; do
-        if [[ $line =~ ^[[:space:]]*(\"[^\"]*\"|[^\",]*)[[:space:]]*$ ]]; then
-            col1=$(echo "${BASH_REMATCH[1]}" | sed 's/^"//;s/"$//')
-            col2=""
-        elif [[ $line =~ ^[[:space:]]*(\"[^\"]*\"|[^\",]*)[[:space:]]*,[[:space:]]*(\"[^\"]+\"|[^\",]+)[[:space:]]*$ ]]; then
-            col1=$(echo "${BASH_REMATCH[1]}" | sed 's/^"//;s/"$//')
-            col2=$(echo "${BASH_REMATCH[2]}" | sed 's/^"//;s/"$//')
-        else
+
+        if [[ $line =~ MTC_LABEL=[[:space:]]*([[a-zA-Z0-9_]+) ]]; then
+            label="${BASH_REMATCH[1]}"
+        fi
+        if [[ $line =~ MTC_CMD=[[:space:]]*(.+)[[:space:]]*$ ]]; then
+            cmd=$(echo "${BASH_REMATCH[1]}" | sed 's/^"//;s/"$//')
+        fi
+
+        if [[ -z "$cmd" ]]; then
             >&2 echo "Error: Invalid CSV format - line does not match expected format: $line"
             exit 1
         fi
 
-        if [[ -z "$col1" && -z "$col2" ]]; then
-            >&2 echo "Error: Invalid CSV format - line with empty fields: $line"
-            exit 1
-        elif [[ -z "$col1" || -z "$col2" ]]; then
+        if [[ -z "$label" || -z "$cmd" ]]; then
             cols=1
         else
             cols=2
@@ -136,8 +136,8 @@ if [[ "$flag_file" == true ]]; then
         last_line_cols=$cols
 
         # Append each field to the respective array
-        first_column+=("$col1")
-        second_column+=("$col2")
+        first_column+=("$label")
+        second_column+=("$cmd")
     done <"$option_file"
 
     for i in "${!first_column[@]}"; do
