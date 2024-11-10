@@ -54,6 +54,7 @@ cmdLabel2, , command2
 - `-s, --show-output`: Show output of the commands
 - `-p, --prepare`: Prepare commands to run before benchmarking. See `hyperfine --help`
 - `-f, --file`: Read commands from a CSV file
+- `-d, --dry-run`: Just print the command that would be executed
 
 ## ENV vars
 

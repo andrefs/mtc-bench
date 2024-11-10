@@ -32,7 +32,7 @@ my $cmd_file = "";
 my $global_prep = "";
 my $labels = [];
 my $psrec_cmds = [];
-my $print_only = 0;
+my $dry_run = 0;
 my $quiet = 0;
 
 
@@ -42,7 +42,7 @@ GetOptions(
     'show-output|s' => \$show_output,
     'verbose|v' => \$verbose,
     'file|f=s' => \$cmd_file,
-    'print|p' => \$print_only,
+    'dry-run|d' => \$dry_run,
     'quiet|q' => \$quiet,
 ) or pod2usage(2);
 Getopt::Long::Configure("no_pass_through");
@@ -87,6 +87,7 @@ if ($help) {
     say STDERR "  -v, --verbose         Print verbose output";
     say STDERR "  -s, --show-output     Show output of commands";
     say STDERR "  -f, --file            Read commands from file";
+    say STDERR "  -d, --dry-run         Just print the command that would be executed";
     say STDERR "  -p, --prepare         Prepare commands to run before benchmarking. See hyperfine --help";
     exit 0;
 }
@@ -238,7 +239,12 @@ $hf_cmd .= "export -f $cleanup_fn_name\n";
 $hf_cmd .= "hyperfine $hf_flags ".join(" ",  @$hf_cmds);
 $hf_cmd .= "\n$cleanup_fn_name\n";
 
-say STDERR "COMMAND:\n\t$hf_cmd" if $verbose;
+if ($dry_run){
+    say $hf_cmd;
+exit 0;
+} elsif ($verbose) {
+    say STDERR "COMMAND:\n\t$hf_cmd";
+}
 
 exec $hf_cmd;
 
