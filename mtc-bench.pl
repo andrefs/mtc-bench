@@ -59,12 +59,19 @@ if ($prep_count == 1){
         push @$bench_cmds, { cmd => $arg };
     }
 } else {
+    my $i=1;
     while (my $arg = shift @ARGV) {
         if ($arg eq "--prepare"){
            push @$bench_cmds, {
                prepare => shift @ARGV,
                cmd => shift @ARGV,
+               label => $i
            };
+        } else {
+            push @$bench_cmds, {
+                cmd => $arg,
+               label => $i
+            }
         }
     }
 }
@@ -114,12 +121,14 @@ if ($cmd_file) {
     say STDERR "Reading commands from file: $cmd_file" if $verbose;
     my $csv = csv(in => $cmd_file, headers => 'auto', quote_char => '\\', allow_whitespace => 1);
 
+    my $i=1;
     for my $row (@$csv) {
         push @$bench_cmds, {
             prepare => $row->{prepare},
             cmd => $row->{command},
-            label => $row->{label},
+            label => $row->{label} || $i,
         };
+        $i++;
     }
 } else {
     say STDERR "Commands read from command line" if $verbose;
