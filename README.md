@@ -17,6 +17,16 @@ You can use the `INSTALL_DIR` ENV var to install on another place, e.g.:
 INSTALL_DIR=$HOME/.local/bin ./install.sh
 ```
 
+## Rebuilding
+
+The build process uses `App::Fatpacker` to bundle `mtc-bench.pl` together with it's dependencies and generate `mtc-bench`.
+
+If you want to change stuff you should edit `mtc-bench.pl` and in the end run
+
+```
+fatpack pack mtc-bench.pl > mtc-bench
+```
+
 ## Run
 
 ```bash
