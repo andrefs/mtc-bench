@@ -238,6 +238,8 @@ $hf_cmd .= "export -f $cleanup_fn_name\n";
 $hf_cmd .= "hyperfine $hf_flags ".join(" ",  @$hf_cmds);
 $hf_cmd .= "\n$cleanup_fn_name\n";
 
+say STDERR "COMMAND:\n\t$hf_cmd" if $verbose;
+
 exec $hf_cmd;
 
 
