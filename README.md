@@ -17,6 +17,16 @@ You can use the `INSTALL_DIR` ENV var to install on another place, e.g.:
 INSTALL_DIR=$HOME/.local/bin ./install.sh
 ```
 
+## Rebuilding
+
+The build process uses `App::Fatpacker` to bundle `mtc-bench.pl` together with it's dependencies and generate `mtc-bench`.
+
+If you want to change stuff you should edit `mtc-bench.pl` and in the end run
+
+```
+fatpack pack mtc-bench.pl > mtc-bench
+```
+
 ## Run
 
 ```bash
@@ -29,27 +39,20 @@ Example:
 mtc-bench 'sleep 2' 'sleep 3'
 ```
 
-Alternatively, you can pass a CSV file with commands to be run, using the flag `-f CMDS_FILE`. The file should have one command per line, indicated with the prefix `MTC_CMD=`
+Alternatively, you can pass a CSV file with commands to be run, using the flag `-f CMDS_FILE`. The file should have a header row, and then one command per line:
 
 ```csv
-MTC_CMD=command1 arg1 arg2
-MTC_CMD=command2 arg1
+label, prepare, command
+cmdLabel1, , command1 arg1 arg2
+cmdLabel2, , command2
 ```
-
-You can also provide a label for each command with `MTC_LABEL=`. This will make the output files have nicer names:
-
-```csv
-MTC_LABEL=cmd1Label, MTC_CMD=command1 arg1 arg2
-MTC_LABEL=cmd2Label, MTC_CMD=command2
-```
-
-On the commands file, either all commands have labels or no command has label.
 
 ## Options
 
 - `-h, --help`: Print help message
 - `-v, --verbose`: Print verbose output
 - `-s, --show-output`: Show output of the commands
+- `-p, --prepare`: Prepare commands to run before benchmarking. See `hyperfine --help`
 - `-f, --file`: Read commands from a CSV file
 
 ## ENV vars
