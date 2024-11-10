@@ -9,7 +9,7 @@ use warnings;
 use Pod::Usage;
 use feature 'say';
 use Text::CSV qw/csv/;
-use Data::Dump qw/dd/;
+use Data::Dump qw/dd pp/;
 use Getopt::Long qw(GetOptionsFromArray);
 use File::Path qw(make_path);
 use POSIX qw(strftime);
@@ -150,8 +150,9 @@ for (my $i = 0; $i < scalar @$bench_cmds; $i++) {
 # Cleanup function
 ###########################################################
 
+my $cleanup_fn_name = "mtc_cleanup_files";
 my $cleanup_fn = <<"CLEANUP";
-function cleanup() {
+function $cleanup_fn_name() {
     if [[ "$verbose" == true ]]; then
         >&2 echo "Cleaning up..."
     fi
@@ -196,7 +197,7 @@ $hf_flags .= " --export-markdown $RES_DIR/hyperfine.md";
 $hf_flags .= " --export-asciidoc $RES_DIR/hyperfine.txt";
 
 if ($verbose) {
-    say STDERR "hyperfine flags: $hf_flags";
+    say STDERR "hyperfine flags:\n\t". $hf_flags;
 }
 
 ###########################################################
@@ -216,13 +217,17 @@ for my $cmd (@$bench_cmds) {
     $cmd->{psrec_cmd} = $psr_cmd;
 
     if ($cmd->{prepare}) {
-        push @$hf_cmds, " --prepare 'cleanup && $cmd->{prepare}'  '$psr_cmd'";
+        push @$hf_cmds, " --prepare '$cleanup_fn_name && $cmd->{prepare}'  '$psr_cmd'";
     } else {
         push @$hf_cmds, " '$cmd->{cmd}'";
     }
 }
 
-my $hf_cmd = "$cleanup_fn\nexport -f cleanup\nhyperfine $hf_flags ".join(" ",  @$hf_cmds);
+my $hf_cmd = "$cleanup_fn\n";
+$hf_cmd .= "export -f $cleanup_fn_name\n";
+$hf_cmd .= "hyperfine $hf_flags ".join(" ",  @$hf_cmds);
+$hf_cmd .= "\n$cleanup_fn_name\n";
+
 exec $hf_cmd;
 
 
