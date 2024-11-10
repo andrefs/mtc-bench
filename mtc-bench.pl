@@ -1,8 +1,9 @@
-#!/use/bin/env perl
+#!/usr/bin/env perl
 
 # PODNAME: mtc-bench
 #
 # ABSTRACT: Benchmark commands using `hyperfine` and `psrecord`. Look into CPU, memory and time.
+BEGIN { $ENV{PERL_TEXT_CSV}='Text::CSV_PP'; }
 
 use strict;
 use warnings;
