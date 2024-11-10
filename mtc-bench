@@ -9455,7 +9455,9 @@ function $cleanup_fn_name() {
 
     file=\$(find "$TMP_RES_DIR" -maxdepth 1 -name "*.log" | head -n 1)
     if [[ -z "\$file" ]]; then
-        >&2 echo "  no log file found for cleanup"
+        if [[ "$verbose" == true ]]; then
+            >&2 echo "  no log file found for cleanup"
+        fi
         return
     fi
 
