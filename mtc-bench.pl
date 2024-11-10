@@ -87,7 +87,7 @@ if ($help) {
     say STDERR "  -v, --verbose         Print verbose output";
     say STDERR "  -s, --show-output     Show output of commands";
     say STDERR "  -f, --file            Read commands from file";
-    say STDERR "  -p, --prepare         Prepare commands to run before benchmarking";
+    say STDERR "  -p, --prepare         Prepare commands to run before benchmarking. See hyperfine --help";
     exit 0;
 }
 
