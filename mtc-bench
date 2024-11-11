@@ -9336,14 +9336,15 @@ for my $arg (@ARGV) {
     $prep_count++ if $arg eq "--prepare";
 }
 
+my $i=1;
 if ($prep_count == 1){
     GetOptions( 'prepare|p=s' => \$global_prep) or pod2usage(2);
     $bench_cmds = [];
     for my $arg (@ARGV) {
-        push @$bench_cmds, { cmd => $arg };
+        push @$bench_cmds, { cmd => $arg, label => $i };
+        $i++;
     }
 } else {
-    my $i=1;
     while (my $arg = shift @ARGV) {
         if ($arg eq "--prepare"){
            push @$bench_cmds, {
@@ -9438,7 +9439,7 @@ if (not -d $RES_DIR) {
 say STDERR "Running benchmark with $RUNS repetitions and $WARMUP warm up rounds on these commands:" if ! $quiet;
 for (my $i = 0; $i < scalar @$bench_cmds; $i++) {
     my $cmd = $bench_cmds->[$i];
-    my $l = $cmd->{label} || $i;
+    my $l = $cmd->{label} || $i+1;
     say STDERR "  [$l]: $cmd->{cmd}" if ! $quiet;
 }
 say STDERR "Saving results to '$RES_DIR'.\n";
