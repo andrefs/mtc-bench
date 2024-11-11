@@ -156,6 +156,7 @@ for (my $i = 0; $i < scalar @$bench_cmds; $i++) {
     my $l = $cmd->{label} || $i;
     say STDERR "  [$l]: $cmd->{cmd}" if ! $quiet;
 }
+say STDERR "Saving results to '$RES_DIR'.\n";
 
 ###########################################################
 # Cleanup function
@@ -240,6 +241,7 @@ my $hf_cmd = "$cleanup_fn\n";
 $hf_cmd .= "export -f $cleanup_fn_name\n";
 $hf_cmd .= "hyperfine $hf_flags ".join(" ",  @$hf_cmds);
 $hf_cmd .= "\n$cleanup_fn_name\n";
+$hf_cmd .= ">&2 echo -e \"\nDone. Results saved to '$RES_DIR'.\"";
 
 if ($dry_run){
     say $hf_cmd;
