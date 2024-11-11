@@ -30,7 +30,6 @@ my $show_output = 0;
 my $verbose = 0;
 my $cmd_file = "";
 my $global_prep = "";
-my $labels = [];
 my $psrec_cmds = [];
 my $dry_run = 0;
 my $quiet = 0;
@@ -73,6 +72,7 @@ if ($prep_count == 1){
                label => $i
             }
         }
+        $i++;
     }
 }
 
