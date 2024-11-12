@@ -202,9 +202,9 @@ CLEANUP
 ###########################################################
 
 my $hf_flags = "";
-if ($show_output) {
-    $hf_flags .= "--show-output";
-}
+
+$hf_flags .= "--show-output" if ($show_output);
+$hf_flags .= " --prepare '$global_prep'" if ($global_prep);
 $hf_flags .= " --shell=bash --runs $RUNS --warmup $WARMUP";
 $hf_flags .= " --export-json $RES_DIR/hyperfine.json";
 $hf_flags .= " --export-csv $RES_DIR/hyperfine.csv";
