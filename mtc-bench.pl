@@ -5,6 +5,7 @@
 # ABSTRACT: Benchmark commands using `hyperfine` and `psrecord`. Look into CPU, memory and time.
 BEGIN { $ENV{PERL_TEXT_CSV}='Text::CSV_PP'; }
 
+
 use strict;
 use warnings;
 use Pod::Usage;
@@ -15,6 +16,14 @@ use Getopt::Long qw(GetOptionsFromArray);
 use File::Path qw(make_path);
 use POSIX qw(strftime);
 use File::Temp qw/ tempdir /;
+#
+# Get a timestamp in the format "[YYYY-MM-DD HH:MM:SS]"
+sub ts {
+    my @time = localtime();
+    return sprintf("[%04d-%02d-%02d %02d:%02d:%02d]", 
+                   $time[5] + 1900, $time[4] + 1, $time[3], 
+                   $time[2], $time[1], $time[0]);
+}
 
 
 ################################
@@ -99,19 +108,19 @@ if ($quiet) {
 
 # Check for conflicting options
 if ($cmd_file and scalar @$bench_cmds > 0) {
-    say STDERR "Error: Cannot specify both --file ($cmd_file) and commands (@$bench_cmds)";
+    say STDERR ts(), " Error: Cannot specify both --file ($cmd_file) and commands (@$bench_cmds)";
     exit 1;
 }
 
 # Check for missing options
 if (not $cmd_file and scalar @$bench_cmds == 0) {
-    say STDERR "Error: Must specify either --file or commands";
+    say STDERR ts(), " Error: Must specify either --file or commands";
     exit 1;
 }
 
 # Check for file existence
 if ($cmd_file and not -e $cmd_file) {
-    say STDERR "Error: File not found: $cmd_file";
+    say STDERR ts(), " Error: File not found: $cmd_file";
     exit 1;
 }
 
@@ -120,7 +129,7 @@ if ($cmd_file and not -e $cmd_file) {
 ###########################################################
 
 if ($cmd_file) {
-    say STDERR "Reading commands from file: $cmd_file" if $verbose;
+    say STDERR ts(), " Reading commands from file: $cmd_file" if $verbose;
     my $csv = csv(in => $cmd_file, headers => 'auto', quote_char => '\\', allow_whitespace => 1);
 
     my $i=1;
@@ -133,7 +142,7 @@ if ($cmd_file) {
         $i++;
     }
 } else {
-    say STDERR "Commands read from command line" if $verbose;
+    say STDERR ts(), " Commands read from command line" if $verbose;
 }
 
 ###########################################################
@@ -151,13 +160,13 @@ my $TMP_RES_DIR = tempdir( CLEANUP => 1 );
 if (not -d $RES_DIR) {
     make_path($RES_DIR);
 }
-say STDERR "Running benchmark with $RUNS repetitions and $WARMUP warm up rounds on these commands:" if ! $quiet;
+say STDERR ts(), " Running benchmark with $RUNS repetitions and $WARMUP warm up rounds on these commands:" if ! $quiet;
 for (my $i = 0; $i < scalar @$bench_cmds; $i++) {
     my $cmd = $bench_cmds->[$i];
     my $l = $cmd->{label} || $i+1;
     say STDERR "  [$l]: $cmd->{cmd}" if ! $quiet;
 }
-say STDERR "Saving results to '$RES_DIR'.\n";
+say STDERR ts(), " Saving results to '$RES_DIR'.\n";
 
 ###########################################################
 # Cleanup function
@@ -212,7 +221,7 @@ $hf_flags .= " --export-markdown $RES_DIR/hyperfine.md";
 $hf_flags .= " --export-asciidoc $RES_DIR/hyperfine.txt";
 
 if ($verbose) {
-    say STDERR "hyperfine flags:\n\t". $hf_flags;
+    say STDERR ts(), " hyperfine flags:\n\t". $hf_flags;
 }
 
 ###########################################################
@@ -245,10 +254,10 @@ $hf_cmd .= "\n$cleanup_fn_name\n";
 $hf_cmd .= ">&2 echo -e \"\nDone. Results saved to '$RES_DIR'.\"";
 
 if ($dry_run){
-    say $hf_cmd;
+    say ts(), ' ', $hf_cmd;
 exit 0;
 } elsif ($verbose) {
-    say STDERR "COMMAND:\n\t$hf_cmd";
+    say STDERR ts(), " COMMAND:\n\t$hf_cmd";
 }
 
 exec $hf_cmd;
