@@ -1,0 +1,3 @@
+label,prepare,command
+dd,sleep 1,dd if=/dev/zero of=/dev/null bs=1M count=30000
+seq-wc,sleep 2,seq 100000000 | wc -l
