@@ -11317,35 +11317,49 @@ say STDERR ts(), " Saving results to '$RES_DIR'.\n";
 my $cleanup_fn_name = "mtc_cleanup_files";
 my $cleanup_fn = <<"CLEANUP";
 function $cleanup_fn_name() {
-    if [[ "$verbose" == true ]]; then
+    if [[ "\$verbose" == true ]]; then
         >&2 echo "Cleaning up..."
     fi
 
-    file=\$(find "$TMP_RES_DIR" -maxdepth 1 -name "*.log" | head -n 1)
-    if [[ -z "\$file" ]]; then
-        if [[ "$verbose" == true ]]; then
-            >&2 echo "  no log file found for cleanup"
-        fi
-        return
-    fi
-
-    label="\${file##*/}"
-    label="\${label%.*}"
-    if [[ -z "\$label" ]]; then
-        >&2 echo "Error: Could not determine label for cleanup"
-    fi
-    counter=1
-    for ext in log png; do
+    for f in "$TMP_RES_DIR"/*; do
+        [[ -f "\$f" ]] || continue
+        base=\$(basename "\$f")
+        label="\${base%.*}"
+        ext="\${base##*.}"
+        counter=1
         while [[ -f "$RES_DIR/\$label-\$counter.\$ext" ]]; do
             counter=\$((counter + 1))
         done
-        if [[ "$verbose" == true ]]; then
-            >&2 echo "  moving $TMP_RES_DIR/\$label.\$ext to $RES_DIR/\$label-\$counter.\$ext"
+        if [[ "\$verbose" == true ]]; then
+            >&2 echo "  moving \$f to $RES_DIR/\$label-\$counter.\$ext"
         fi
-        mv "$TMP_RES_DIR/\$label.\$ext" "$RES_DIR/\$label-\$counter.\$ext"
+        mv "\$f" "$RES_DIR/\$label-\$counter.\$ext"
     done
 }
 CLEANUP
+
+my $combine_fn_name = "mtc_combine_plots";
+my $combine_fn = <<"COMBINE";
+function $combine_fn_name() {
+    pngs=()
+    shopt -s nullglob
+    for png in "$RES_DIR"/*.png; do
+        [[ "\$(basename "\$png")" == "combined.png" ]] && continue
+        pngs+=("\$png")
+    done
+    shopt -u nullglob
+    if (( \${#pngs[@]} > 1 )); then
+        if command -v montage >/dev/null 2>&1; then
+            montage "\${pngs[@]}" -tile 2x -geometry +10+10 -background white "$RES_DIR/combined.png"
+            if [[ "\$verbose" == true ]]; then
+                >&2 echo "  created combined.png from \${#pngs[@]} PNG files"
+            fi
+        else
+            >&2 echo "Warning: ImageMagick 'montage' not found; skipping combined image."
+        fi
+    fi
+}
+COMBINE
 
 
 ###########################################################
@@ -11372,9 +11386,14 @@ if ($verbose) {
 
 my $interval = 0.1;
 
+# Resolve absolute path to psrecord
+my $psrecord_path = `command -v psrecord` || 'psrecord';
+chomp $psrecord_path;
+$psrecord_path = 'psrecord' unless $psrecord_path;
+
 my $hf_cmds = [];
 for my $cmd (@$bench_cmds) {
-    my $psr_cmd = "psrecord --interval $interval  ";
+    my $psr_cmd = "$psrecord_path --interval $interval  ";
     $psr_cmd .= "--plot $TMP_RES_DIR/$cmd->{label}.png ";
     $psr_cmd .= "--log $TMP_RES_DIR/$cmd->{label}.log ";
     $psr_cmd .= "--include-children ";
@@ -11385,14 +11404,16 @@ for my $cmd (@$bench_cmds) {
     if ($cmd->{prepare}) {
         push @$hf_cmds, " --prepare '$cleanup_fn_name && $cmd->{prepare}'  '$psr_cmd'";
     } else {
-        push @$hf_cmds, " '$cmd->{cmd}'";
+        push @$hf_cmds, " '$psr_cmd'";
     }
 }
 
 my $hf_cmd = "$cleanup_fn\n";
-$hf_cmd .= "export -f $cleanup_fn_name\n";
+$hf_cmd .= "$combine_fn\n";
+$hf_cmd .= "export -f $cleanup_fn_name $combine_fn_name\n";
 $hf_cmd .= "hyperfine $hf_flags ".join(" ",  @$hf_cmds);
 $hf_cmd .= "\n$cleanup_fn_name\n";
+$hf_cmd .= "\n$combine_fn_name\n";
 $hf_cmd .= ">&2 echo -e \"\nDone. Results saved to '$RES_DIR'.\"";
 
 if ($dry_run){

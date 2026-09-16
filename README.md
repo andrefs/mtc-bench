@@ -107,6 +107,10 @@ This means that `hyperfine` is not directly measuring the command's run time, bu
 I ran a few tests on my laptop and `psrecord` seems to add around 0.7s to the command's run time in each run (probably because it is generating the output log and image).
 Anyway, it shouldn't change much across runs, so the comparisons between the commands being benchmarked still stand.
 
+### Combined Image
+
+After benchmarking completes, `mtc-bench` automatically generates a combined image (`combined.png`) in the results directory using ImageMagick's `montage`. Individual command plots (`label-1.png`, `label-2.png`, etc.) are also kept. If ImageMagick is not found, a warning is printed and only the individual images are saved.
+
 ## Troubleshooting
 
 - **Command not found**: Make sure `mtc-bench` is installed and in your `PATH`. Run `which mtc-bench` to verify.
