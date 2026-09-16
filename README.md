@@ -1,6 +1,5 @@
 # mtc-bench
 
-[![GitHub Release](https://img.shields.io/github/v/release/andrefs/mtc-bench?include_prereleases=)](https://github.com/andrefs/mtc-bench/releases)
 [![mtc-bench 0.2.1](https://img.shields.io/static/v1?style=flat-square&label=mtc-bench&message=0.2.1&color=blue)](https://github.com/andrefs/mtc-bench/releases)
 
 Benchmark command execution time, CPU usage, and memory usage using `hyperfine` and `psrecord`.
