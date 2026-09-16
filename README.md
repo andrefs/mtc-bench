@@ -1,11 +1,11 @@
 # mtc-bench
 
-Benchmark commands using `hyperfine` and `psrecord`. Look into CPU, memory and time.
+Benchmark command execution time, CPU usage, and memory usage using `hyperfine` and `psrecord`.
 
 ## Dependencies
 
-- hyperfine
-- psrecord
+- [`hyperfine`](https://github.com/sharkdp/hyperfine) — CLI benchmarking tool for measuring execution time
+- [`psrecord`](https://github.com/gaogaotiantian/psrecord) — Monitors CPU and memory usage of a process
 
 ## Installing
 
@@ -15,6 +15,20 @@ You can use the `INSTALL_DIR` ENV var to install on another place, e.g.:
 
 ```
 INSTALL_DIR=$HOME/.local/bin ./install.sh
+```
+
+## Getting Started
+
+Run a quick benchmark with two commands:
+
+```bash
+mtc-bench 'sleep 2' 'sleep 3'
+```
+
+Or read commands from a CSV file (see [Run](#run) for the format):
+
+```bash
+mtc-bench -f commands.csv
 ```
 
 ## Rebuilding
@@ -29,6 +43,8 @@ fatpack pack mtc-bench.pl > mtc-bench
 
 ## Run
 
+Benchmark one or more commands:
+
 ```bash
 mtc-bench 'CMD1 [ARGS...]' ['CMD2'...]
 ```
@@ -39,7 +55,7 @@ Example:
 mtc-bench 'sleep 2' 'sleep 3'
 ```
 
-Alternatively, you can pass a CSV file with commands to be run, using the flag `-f CMDS_FILE`. The file should have a header row, and then one command per line:
+Or read commands from a CSV file using the `-f CMDS_FILE` flag. The file should have a header row, then one command per line:
 
 ```csv
 label, prepare, command
@@ -49,20 +65,24 @@ cmdLabel2, , command2
 
 ## Options
 
-- `-h, --help`: Print help message
-- `-v, --verbose`: Print verbose output
-- `-s, --show-output`: Show output of the commands
-- `-p, --prepare`: Prepare commands to run before benchmarking. See `hyperfine --help`
-- `-f, --file`: Read commands from a CSV file
-- `-d, --dry-run`: Just print the command that would be executed
+| Flag | Description |
+|------|-------------|
+| `-h`, `--help` | Print help message |
+| `-v`, `--verbose` | Print verbose output |
+| `-s`, `--show-output` | Show output of the commands |
+| `-p`, `--prepare` | Prepare commands to run before benchmarking. See `hyperfine --help` |
+| `-f`, `--file` | Read commands from a CSV file |
+| `-d`, `--dry-run` | Just print the command that would be executed |
 
 ## ENV vars
 
-You can also change the behavior of `mtc-bench` using the following ENV variables:
+You can also change the behavior of `mtc-bench` using the following environment variables:
 
-- `WARMUP`: Number of warmup runs
-- `RES_DIR`: Directory to store results
-- `RUNS`: Number of runs
+| Variable | Description |
+|----------|-------------|
+| `WARMUP` | Number of warmup runs |
+| `RES_DIR` | Directory to store results |
+| `RUNS` | Number of runs |
 
 ## Performance
 
@@ -72,6 +92,12 @@ This means that `hyperfine` is not directly measuring the command's run time, bu
 I ran a few tests on my laptop and `psrecord` seems to add around 0.7s to the command's run time in each run (probably because it is generating the output log and image).
 Anyway, it shouldn't change much across runs, so the comparisons between the commands being benchmarked still stand.
 
+## Troubleshooting
+
+- **Command not found**: Make sure `mtc-bench` is installed and in your `PATH`. Run `which mtc-bench` to verify.
+- **Dependency error**: Ensure `hyperfine` and `psrecord` are installed and accessible in your `PATH`.
+- **CSV parse errors**: Verify your CSV has a header row with `label`, `prepare`, `command` columns and uses commas as delimiters.
+
 ## Bugs and stuff
 
 Open a GitHub [issue](https://github.com/andrefs/mtc-bench/issues) or, preferably, send me a [pull request](https://github.com/andrefs/mtc-bench/pulls).
@@ -80,7 +106,7 @@ Open a GitHub [issue](https://github.com/andrefs/mtc-bench/issues) or, preferabl
 
 The MIT License (MIT)
 
-Copyright (c) 2024 André Santos andrefs@andrefs.com
+Copyright (c) 2024 André Santos — [andrefs@andrefs.com](mailto:andrefs@andrefs.com)
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the "Software"), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so, subject to the following conditions:
 
