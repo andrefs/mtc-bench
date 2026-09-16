@@ -17,7 +17,7 @@ use File::Path qw(make_path);
 use POSIX qw(strftime);
 use File::Temp qw/ tempdir /;
 
-our $VERSION = '0.1.0';
+our $VERSION = '0.2.0';
 
 #
 # Get a timestamp in the format "[YYYY-MM-DD HH:MM:SS]"
@@ -211,7 +211,7 @@ function $combine_fn_name() {
     done
     shopt -u nullglob
     if (( \${#pngs[@]} > 1 )); then
-        if command -v montage >/dev/null 2>&1; then
+        if which montage >/dev/null 2>&1; then
             montage "\${pngs[@]}" -tile 2x -geometry +10+10 -background white "$RES_DIR/combined.png"
             if [[ $? -eq 0 ]]; then
                 if [[ "\$verbose" == true ]]; then
@@ -253,7 +253,7 @@ if ($verbose) {
 my $interval = 0.1;
 
 # Resolve absolute path to psrecord
-my $psrecord_path = `command -v psrecord` || 'psrecord';
+my $psrecord_path = `which psrecord` || 'psrecord';
 chomp $psrecord_path;
 $psrecord_path = 'psrecord' unless $psrecord_path;
 
