@@ -73,6 +73,7 @@ cmdLabel2, , command2
 | `-p`, `--prepare` | Prepare commands to run before benchmarking. See `hyperfine --help` |
 | `-f`, `--file` | Read commands from a CSV file |
 | `-d`, `--dry-run` | Just print the command that would be executed |
+| `--version` | Print version information |
 
 ## ENV vars
 

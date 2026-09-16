@@ -16,6 +16,9 @@ use Getopt::Long qw(GetOptionsFromArray);
 use File::Path qw(make_path);
 use POSIX qw(strftime);
 use File::Temp qw/ tempdir /;
+
+our $VERSION = '0.1.0';
+
 #
 # Get a timestamp in the format "[YYYY-MM-DD HH:MM:SS]"
 sub ts {
@@ -52,6 +55,7 @@ GetOptions(
     'file|f=s' => \$cmd_file,
     'dry-run|d' => \$dry_run,
     'quiet|q' => \$quiet,
+    'version' => sub { say "mtc-bench $VERSION"; exit 0; },
 ) or pod2usage(2);
 Getopt::Long::Configure("no_pass_through");
 
