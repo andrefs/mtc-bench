@@ -31,6 +31,20 @@ Or read commands from a CSV file (see [Run](#run) for the format):
 mtc-bench -f commands.csv
 ```
 
+## Comparison with `zbench`
+
+[`zbench`](https://github.com/yxanul/zbench) is another CLI tool for benchmarking command execution. Here's how the two compare:
+
+| Aspect | `mtc-bench` | `zbench` |
+|--------|-------------|----------|
+| Measurement stack | `hyperfine` → `psrecord` | `perf_event_open` + `wait4` |
+| Metrics | Execution time, CPU usage, memory usage | Wall time, peak RSS, hardware counters (cycles, instructions, cache/branch misses) |
+| Portability | Anywhere `hyperfine` and `psrecord` run | Linux-only, requires `perf_event_open` access |
+| Statistics | Basic timing | Mean ± σ, min/max, outlier detection, two-sample t-test significance |
+| Overhead | `psrecord` adds ~0.7s per run | Direct `fork`+`exec`, lower per-run overhead |
+
+Use `mtc-bench` when you need a simple, cross-platform way to time and profile commands with visual output. Use `zbench` when you need fine-grained hardware counter data and statistical significance testing on Linux.
+
 ## Rebuilding
 
 The build process uses `App::Fatpacker` to bundle `mtc-bench.pl` together with it's dependencies and generate `mtc-bench`.
