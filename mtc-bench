@@ -11351,8 +11351,12 @@ function $combine_fn_name() {
     if (( \${#pngs[@]} > 1 )); then
         if command -v montage >/dev/null 2>&1; then
             montage "\${pngs[@]}" -tile 2x -geometry +10+10 -background white "$RES_DIR/combined.png"
-            if [[ "\$verbose" == true ]]; then
-                >&2 echo "  created combined.png from \${#pngs[@]} PNG files"
+            if [[ $? -eq 0 ]]; then
+                if [[ "\$verbose" == true ]]; then
+                    >&2 echo "  created combined.png from \${#pngs[@]} PNG files"
+                fi
+            else
+                >&2 echo "Error: Failed to create combined.png"
             fi
         else
             >&2 echo "Warning: ImageMagick 'montage' not found; skipping combined image."
