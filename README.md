@@ -109,7 +109,7 @@ Anyway, it shouldn't change much across runs, so the comparisons between the com
 
 ### Combined Image
 
-After benchmarking completes, `mtc-bench` automatically generates a combined image (`combined.png`) in the results directory using ImageMagick's `montage`. Individual command plots (`label-1.png`, `label-2.png`, etc.) are also kept. If ImageMagick is not found, a warning is printed and only the individual images are saved.
+After benchmarking completes, `mtc-bench` automatically generates a combined image (`combined.png`) in the results directory using ImageMagick's `montage`. Each subfigure includes a label identifying which command it corresponds to. Individual command plots (`label-1.png`, `label-2.png`, etc.) are also kept. If ImageMagick is not found, a warning is printed and only the individual images are saved.
 
 ## Troubleshooting
 

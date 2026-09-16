@@ -11342,16 +11342,25 @@ my $combine_fn_name = "mtc_combine_plots";
 my $combine_fn = <<"COMBINE";
 function $combine_fn_name() {
     pngs=()
+    labels=()
     shopt -s nullglob
     for png in "$RES_DIR"/*.png; do
-        [[ "\$(basename "\$png")" == "combined.png" ]] && continue
+        if [[ "\$(basename "\$png")" == "combined.png" ]]; then
+            continue
+        fi
+        label=\$(basename "\$png" .png)
         pngs+=("\$png")
+        labels+=("\$label")
     done
     shopt -u nullglob
     if (( \${#pngs[@]} > 1 )); then
         if which montage >/dev/null 2>&1; then
-            montage "\${pngs[@]}" -tile 2x -geometry +10+10 -background white "$RES_DIR/combined.png"
-            if [[ $? -eq 0 ]]; then
+            montage_args=()
+            for i in "\${!pngs[@]}"; do
+                montage_args+=(-label "\${labels[\$i]}" "\${pngs[\$i]}")
+            done
+            montage "\${montage_args[@]}" -tile 2x -geometry +10+10 -background white -title "Benchmark Results" -font DejaVu-Sans -pointsize 24 "$RES_DIR/combined.png"
+            if [[ \$? -eq 0 ]]; then
                 if [[ "\$verbose" == true ]]; then
                     >&2 echo "  created combined.png from \${#pngs[@]} PNG files"
                 fi
