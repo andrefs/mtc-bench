@@ -111,6 +111,8 @@ Anyway, it shouldn't change much across runs, so the comparisons between the com
 
 After benchmarking completes, `mtc-bench` automatically generates a combined image (`combined.png`) in the results directory using ImageMagick's `montage`. Each subfigure includes a label identifying which command it corresponds to. Individual command plots (`label-1.png`, `label-2.png`, etc.) are also kept. If ImageMagick is not found, a warning is printed and only the individual images are saved.
 
+![Combined image example](combined-example.png)
+
 ## Troubleshooting
 
 - **Command not found**: Make sure `mtc-bench` is installed and in your `PATH`. Run `which mtc-bench` to verify.
