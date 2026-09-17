@@ -19,6 +19,8 @@ You can use the `INSTALL_DIR` ENV var to install on another place, e.g.:
 INSTALL_DIR=$HOME/.local/bin ./install.sh
 ```
 
+The script checks for the required dependencies (`hyperfine` and `psrecord`) and aborts if they are missing. `montage` (ImageMagick) is optional, so a missing one only prints a warning and installs anyway, but the combined image will be skipped.
+
 ## Getting Started
 
 Run a quick benchmark with two commands:

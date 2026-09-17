@@ -12,6 +12,27 @@ if [ ! -f "$SCRIPT_NAME" ]; then
   exit 1
 fi
 
+# Check dependencies
+check_dep() {
+  command -v "$1" >/dev/null 2>&1
+}
+
+MISSING=""
+for dep in hyperfine psrecord; do
+  check_dep "$dep" || MISSING="$MISSING $dep"
+done
+if [ -n "$MISSING" ]; then
+  echo "Error: missing required dependencies:$MISSING"
+  echo "Install them first, e.g.:"
+  echo "  hyperfine: <package manager> install hyperfine"
+  echo "  psrecord:  pip install psrecord"
+  exit 1
+fi
+
+if ! check_dep montage; then
+  echo "Warning: 'montage' (ImageMagick) not found; the combined image will be skipped."
+fi
+
 # Check if the target directory is writable
 if [ ! -w "$INSTALL_DIR" ]; then
   echo "Error: You do not have permission to write to $INSTALL_DIR."
