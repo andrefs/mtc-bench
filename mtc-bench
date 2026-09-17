@@ -11155,7 +11155,7 @@ use File::Path qw(make_path);
 use POSIX qw(strftime);
 use File::Temp qw/ tempdir /;
 
-our $VERSION = '0.2.1';
+our $VERSION = '0.2.2';
 
 #
 # Get a timestamp in the format "[YYYY-MM-DD HH:MM:SS]"
@@ -11183,6 +11183,7 @@ my $global_prep = "";
 my $psrec_cmds = [];
 my $dry_run = 0;
 my $quiet = 0;
+my $interval = $ENV{INTERVAL} || 0.1;
 
 
 Getopt::Long::Configure("pass_through");
@@ -11193,6 +11194,7 @@ GetOptions(
     'file|f=s' => \$cmd_file,
     'dry-run|d' => \$dry_run,
     'quiet|q' => \$quiet,
+    'interval|i=f' => \$interval,
     'version' => sub { say "mtc-bench $VERSION"; exit 0; },
 ) or pod2usage(2);
 Getopt::Long::Configure("no_pass_through");
@@ -11233,7 +11235,7 @@ if ($prep_count == 1){
 ###########################################################
 
 if ($help) {
-    say STDERR "Usage: $0 [options]";
+    say STDERR "Usage: $0 [options] [CMD1 [CMD2...]]";
     say STDERR "Options:";
     say STDERR "  -h, --help            Print this help message";
     say STDERR "  -v, --verbose         Print verbose output";
@@ -11241,6 +11243,8 @@ if ($help) {
     say STDERR "  -f, --file            Read commands from file";
     say STDERR "  -d, --dry-run         Just print the command that would be executed";
     say STDERR "  -p, --prepare         Prepare commands to run before benchmarking. See hyperfine --help";
+    say STDERR "  -i, --interval        psrecord sampling interval in seconds (default: 0.1)";
+    say STDERR "  --version             Print version information";
     exit 0;
 }
 
@@ -11397,8 +11401,6 @@ if ($verbose) {
 # Run hyperfine
 ###########################################################
 
-my $interval = 0.1;
-
 # Resolve absolute path to psrecord
 my $psrecord_path = `which psrecord` || 'psrecord';
 chomp $psrecord_path;
@@ -11442,7 +11444,112 @@ exec $hf_cmd;
 
 
 __END__
- 
+
 =head1 NAME
+
+mtc-bench - Benchmark commands using C<hyperfine> and C<psrecord>. Look into CPU, memory and time.
+
+=head1 SYNOPSIS
+
+B<mtc-bench> [options] C<'CMD1 [ARGS...]'> [C<'CMD2'...>]
+
+B<mtc-bench> [options] C<-f> I<CMDS_FILE>
+
+=head1 DESCRIPTION
+
+B<mtc-bench> orchestrates C<hyperfine> (for execution time) and C<psrecord>
+(for CPU and memory usage) to benchmark one or more shell commands. Results
+are collected under a timestamped directory in C<mtc-results/>:
+
+=over 4
+
+=item *
+
+per-command C<psrecord> logs and PNG plots,
+
+=item *
+
+C<hyperfine> statistics exported as JSON, CSV, markdown and asciidoc,
+
+=item *
+
+a combined image (C<combined.png>) with all plots side by side, when
+ImageMagick's C<montage> is available.
+
+=back
+
+=head1 OPTIONS
+
+=over 8
+
+=item B<-h>, B<--help>
+
+Print the help message.
+
+=item B<-v>, B<--verbose>
+
+Print verbose output.
+
+=item B<-s>, B<--show-output>
+
+Show the output of the benchmarked commands.
+
+=item B<-f> I<CMDS_FILE>, B<--file> I<CMDS_FILE>
+
+Read commands from a CSV file. The file must have a header row, then one
+command per line in the format C<label,prepare,command>. Both C<label> and
+C<prepare> may be empty.
+
+=item B<-d>, B<--dry-run>
+
+Just print the command that would be executed.
+
+=item B<-p> I<PREP>, B<--prepare> I<PREP>
+
+Command to run before benchmarking. See C<hyperfine --help>.
+
+=item B<-i> I<SECONDS>, B<--interval> I<SECONDS>
+
+C<psrecord> sampling interval in seconds. Defaults to C<0.1>.
+
+=item B<--version>
+
+Print version information.
+
+=back
+
+=head1 ENVIRONMENT
+
+=over 8
+
+=item C<RUNS>
+
+Number of times each command is run. Defaults to C<3>.
+
+=item C<WARMUP>
+
+Number of warmup runs. Defaults to C<1>.
+
+=item C<INTERVAL>
+
+C<psrecord> sampling interval in seconds. Same as B<-i>/B<--interval>.
+Defaults to C<0.1>.
+
+=item C<RES_DIR>
+
+Directory to store results. Defaults to C<mtc-results/YYYYMMDD-HHMMSS/>.
+
+=back
+
+=head1 SEE ALSO
+
+L<hyperfine|https://github.com/sharkdp/hyperfine>,
+L<psrecord|https://github.com/gaogaotiantian/psrecord>
+
+=head1 LICENSE
+
+The MIT License (MIT)
+
+Copyright (c) 2024 Andr=E9 Santos
  
 

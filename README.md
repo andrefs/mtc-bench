@@ -1,6 +1,6 @@
 # mtc-bench
 
-[![mtc-bench 0.2.1](https://img.shields.io/static/v1?style=flat-square&label=mtc-bench&message=0.2.1&color=blue)](https://github.com/andrefs/mtc-bench/releases)
+[![mtc-bench 0.2.2](https://img.shields.io/static/v1?style=flat-square&label=mtc-bench&message=0.2.2&color=blue)](https://github.com/andrefs/mtc-bench/releases)
 
 Benchmark command execution time, CPU usage, and memory usage using `hyperfine` and `psrecord`.
 
@@ -54,7 +54,7 @@ The build process uses `App::Fatpacker` to bundle `mtc-bench.pl` together with i
 If you want to change stuff you should edit `mtc-bench.pl` and in the end run
 
 ```
-fatpack pack mtc-bench.pl > mtc-bench
+fatpack pack mtc-bench.pl > mtc-bench.new 2>/dev/null && mv mtc-bench.new mtc-bench && chmod +x mtc-bench
 ```
 
 ## Run
@@ -69,6 +69,12 @@ Example:
 
 ```bash
 mtc-bench 'sleep 2' 'sleep 3'
+```
+
+Adjust the `psrecord` sampling interval (in seconds) with `-i`/`--interval`:
+
+```bash
+mtc-bench -i 0.5 'sleep 2' 'sleep 3'
 ```
 
 Or read commands from a CSV file using the `-f CMDS_FILE` flag. The file should have a header row, then one command per line:
@@ -89,6 +95,7 @@ cmdLabel2, , command2
 | `-p`, `--prepare` | Prepare commands to run before benchmarking. See `hyperfine --help` |
 | `-f`, `--file` | Read commands from a CSV file |
 | `-d`, `--dry-run` | Just print the command that would be executed |
+| `-i`, `--interval` | `psrecord` sampling interval in seconds (default: `0.1`) |
 | `--version` | Print version information |
 
 ## ENV vars
@@ -100,6 +107,7 @@ You can also change the behavior of `mtc-bench` using the following environment 
 | `WARMUP` | Number of warmup runs |
 | `RES_DIR` | Directory to store results |
 | `RUNS` | Number of runs |
+| `INTERVAL` | `psrecord` sampling interval in seconds (default: `0.1`). Same as the `-i`/`--interval` flag |
 
 ## Performance
 
